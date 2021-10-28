@@ -1,0 +1,13 @@
+name: LootChests
+main: io.github.fisher2911.lootchests.LootChestsPlugin
+version: 1.0.0
+api-version: 1.16
+depend:
+  - HolographicDisplays
+commands:
+  lootchest:
+    aliases: ["lc"]
+    description: Base loot chest commmand
+permissions:
+  lootchest.command:
+    description: permission to allow use of loot chest command

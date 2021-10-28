@@ -1,0 +1,37 @@
+plugins {
+    id "java"
+    id "com.github.johnrengelman.shadow" version "6.1.0"
+}
+
+group "io.github.fisher2911"
+version "1.0"
+
+repositories {
+    mavenCentral()
+    maven { url = "https://hub.spigotmc.org/nexus/content/repositories/snapshots/" }
+    maven { url = "https://repo.mattstudios.me/artifactory/public/" }
+    maven { url = "https://repo.codemc.io/repository/maven-public/" }
+}
+
+dependencies {
+    implementation "org.jetbrains:annotations:22.0.0"
+    testImplementation "org.junit.jupiter:junit-jupiter-api:5.8.1"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.8.1"
+    compileOnly "org.spigotmc:spigot-api:1.16.5-R0.1-SNAPSHOT"
+    compileOnly "com.gmail.filoghost.holographicdisplays:holographicdisplays-api:2.4.0"
+    implementation "dev.triumphteam:triumph-gui:3.0.3"
+}
+
+test {
+    useJUnitPlatform()
+}
+
+shadowJar {
+    relocate "dev.triumphteam.gui", "io.github.fisher2911.lootchests.gui"
+}
+
+shadowJar {
+    archiveBaseName.set("LootChests")
+    archiveClassifier.set("")
+    archiveVersion.set("")
+}
