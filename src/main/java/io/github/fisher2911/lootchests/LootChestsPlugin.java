@@ -7,6 +7,7 @@ import io.github.fisher2911.lootchests.listener.LootChestLootEvent;
 import io.github.fisher2911.lootchests.listener.WorldLoadListener;
 import io.github.fisher2911.lootchests.lootchests.LootChestManager;
 import io.github.fisher2911.lootchests.message.Messages;
+import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -20,6 +21,9 @@ public class LootChestsPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        final int pluginId = 13181;
+        Metrics metrics = new Metrics(this, pluginId);
+
         this.lootChestManager = new LootChestManager(this);
         this.messages = new Messages(this);
         List.of(

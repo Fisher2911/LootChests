@@ -331,4 +331,23 @@ public class LootChestManager {
 
         return this.getLootChest(id);
     }
+
+    public void removeLootChest(final Block block) {
+        if (!(block.getState() instanceof final Container container)) {
+            return;
+        }
+
+        if (!container.getPersistentDataContainer().has(ChestUtil.CHEST_KEY, PersistentDataType.STRING)) {
+            return;
+        }
+
+        final Location above = block.getLocation().clone().add(0.5, 1.5, 0.5);
+
+        for (final Hologram hologram : HologramsAPI.getHolograms(this.plugin)) {
+            if  (above.equals(hologram.getLocation())) {
+                hologram.delete();
+                break;
+            }
+        }
+    }
 }

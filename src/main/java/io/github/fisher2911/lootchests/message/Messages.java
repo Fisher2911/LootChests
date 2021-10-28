@@ -16,6 +16,7 @@ public class Messages {
     public static final String COMMAND_CREATE = "command-create-format";
     public static final String COMMAND_DELETE = "command-delete-format";
     public static final String COMMAND_GET = "command-get-format";
+    public static final String COMMAND_GIVE = "command-give";
     public static final String COMMAND_EDIT = "command-edit-format";
     public static final String COMMAND_LIST = "command-list-format";
     public static final String COMMAND_EDIT_ITEM = "command-edit-item";
@@ -29,6 +30,7 @@ public class Messages {
     public static final String ITEM_CHANCES_SET = "item-chances-set";
     public static final String HOLOGRAM_DISPLAY_LOOTED = "hologram-display-looted";
     public static final String HOLOGRAM_DISPLAY_NOT_LOOTED = "hologram-display-not-looted";
+    public static final String PLAYER_NOT_ONLINE = "player-not-online";
 
 
     final Map<String, String> messageMap = new HashMap<>();

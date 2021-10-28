@@ -8,6 +8,7 @@ import io.github.fisher2911.lootchests.lootchests.LootChestManager;
 import io.github.fisher2911.lootchests.message.Messages;
 import io.github.fisher2911.lootchests.number.Range;
 import org.apache.commons.lang.math.NumberUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
@@ -15,11 +16,13 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 public class LootChestCommand implements CommandExecutor, TabExecutor {
@@ -97,6 +100,11 @@ public class LootChestCommand implements CommandExecutor, TabExecutor {
                 return true;
             }
 
+            case "give" -> {
+                this.giveLootChest(player, args);
+                return true;
+            }
+
             case "edititem" -> {
                 this.setItemChance(player, args);
                 return true;
@@ -141,7 +149,7 @@ public class LootChestCommand implements CommandExecutor, TabExecutor {
         }
 
         final int min = Integer.parseInt(minString);
-        final int max = Integer.parseInt(maxString);
+        final int max = Integer.parseInt(maxString) + 1;
 
         if (min >= max) {
             player.sendMessage(ChatColor.RED + "The minimum amount of items must be less than the maximum!");
@@ -211,17 +219,63 @@ public class LootChestCommand implements CommandExecutor, TabExecutor {
     }
 
     private void getLootChest(final Player player, final String[] args) {
-        if (args.length != 2) {
+        if (args.length < 2) {
             player.sendMessage(this.messages.getMessage(Messages.COMMAND_GET));
             return;
         }
 
         final String id = args[1];
 
+        this.giveLootChest(player, player, id, args, 2);
+    }
+
+    private void giveLootChest(final Player player, final String[] args) {
+        if (args.length < 3) {
+            player.sendMessage(this.messages.getMessage(Messages.COMMAND_GIVE));
+            return;
+        }
+
+        final String id = args[1];
+        final String playerName = args[2];
+
+        final Player giveTo = Bukkit.getPlayer(playerName);
+
+        if (giveTo == null) {
+            player.sendMessage(this.messages.getMessage(Messages.PLAYER_NOT_ONLINE).
+                    replace("%player%", playerName));
+            return;
+        }
+
+        this.giveLootChest(player, giveTo, id, args, 3);
+    }
+
+    private void giveLootChest(final Player giver,
+                               final Player giveTo,
+                               final String id,
+                               final String[] args,
+                               final int possibleAmountIndex) {
+        final int amount;
+
+        if (args.length == possibleAmountIndex + 1) {
+            final String arg = args[possibleAmountIndex];
+            try {
+                amount = Integer.parseInt(arg);
+            } catch (final NumberFormatException exception) {
+                giver.sendMessage(this.notNumberMessage.replace("%number%", arg));
+                return;
+            }
+        } else {
+            amount = 1;
+        }
+
         final Optional<LootChest> optional = this.lootChestManager.getLootChest(id);
 
-        optional.ifPresentOrElse(lootChest -> player.getInventory().addItem(lootChest.getLootChestItem()),
-                () -> player.sendMessage(this.messages.getMessage(Messages.NO_LOOT_CHEST_FOUND, id)));
+        optional.ifPresentOrElse(lootChest -> {
+                    final ItemStack itemStack = lootChest.getLootChestItem().clone();
+                    itemStack.setAmount(amount);
+                    giveTo.getInventory().addItem(itemStack);
+                },
+                () -> giver.sendMessage(this.messages.getMessage(Messages.NO_LOOT_CHEST_FOUND, id)));
     }
 
     private void deleteLootChest(final CommandSender sender, final String[] args) {
@@ -351,12 +405,22 @@ public class LootChestCommand implements CommandExecutor, TabExecutor {
                                       @NotNull final String alias,
                                       @NotNull final String[] args) {
 
+        if (!sender.hasPermission(permission)) {
+            return null;
+        }
 
         final List<String> tabs = new ArrayList<>();
 
         if (args.length == 1) {
-            final List<String> possibleTabs = List.of("create", "delete", "get", "edit", "list", "edititem");
+
             final String arg = args[0];
+
+            if (arg.equalsIgnoreCase("create")) {
+                return null;
+            }
+
+            final List<String> possibleTabs = List.of("create", "delete", "get", "give", "edit", "list", "edititem", "reload");
+
             for (final String possible : possibleTabs) {
                 if (possible.toLowerCase().startsWith(arg.toLowerCase())) {
                     tabs.add(possible);
@@ -366,7 +430,7 @@ public class LootChestCommand implements CommandExecutor, TabExecutor {
         }
 
         if (args.length == 2) {
-            final List<String> possibleTabs = List.of("delete", "get", "edit", "edititem");
+            final List<String> possibleTabs = List.of("delete", "get", "give", "edit", "edititem");
             final String arg = args[0];
             final String argTwo = args[1];
 
@@ -383,14 +447,32 @@ public class LootChestCommand implements CommandExecutor, TabExecutor {
             return tabs;
         }
 
-        if (args.length == 3 && args[0].equalsIgnoreCase("edititem")) {
-            final String arg = args[2];
-            for (final Material material : Material.values()) {
-                final String string = material.toString();
-                if (string.toLowerCase().startsWith(arg.toLowerCase())) {
+        final List<String> possible = new ArrayList<>();
+
+        if (args.length == 3) {
+            final String arg0 = args[0].toLowerCase();
+            switch (arg0) {
+                case "edititem" -> {
+                    for (final Material material : Material.values()) {
+                        possible.add(material.toString());
+                    }
+                }
+
+                case "give" -> {
+                    for (final Player player : Bukkit.getOnlinePlayers()) {
+                        possible.add(player.getName());
+                    }
+                }
+            }
+
+            for (final String string : possible) {
+                final String arg = args[2];
+
+                if (string.toLowerCase(Locale.ROOT).startsWith(arg.toLowerCase(Locale.ROOT))) {
                     tabs.add(string);
                 }
             }
+
             return tabs;
         }
 
