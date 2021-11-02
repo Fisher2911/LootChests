@@ -5,8 +5,11 @@ import org.bukkit.ChatColor;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class Messages {
 
@@ -20,7 +23,8 @@ public class Messages {
     public static final String COMMAND_EDIT = "command-edit-format";
     public static final String COMMAND_LIST = "command-list-format";
     public static final String COMMAND_EDIT_ITEM = "command-edit-item";
-    public static final String NO_PERMISSION= "no-permission";
+    public static final String COMMAND_FIX = "command-fix";
+    public static final String NO_PERMISSION = "no-permission";
     public static final String MUST_BE_PLAYER = "must-be-player";
     public static final String LOOT_CHEST_SAVED = "loot-chest-saved";
     public static final String LOOT_CHEST_DELETED = "loot-chest-deleted";
@@ -31,6 +35,10 @@ public class Messages {
     public static final String HOLOGRAM_DISPLAY_LOOTED = "hologram-display-looted";
     public static final String HOLOGRAM_DISPLAY_NOT_LOOTED = "hologram-display-not-looted";
     public static final String PLAYER_NOT_ONLINE = "player-not-online";
+    public static final String FIX_TASK_COMPLETE = "fix-task-complete";
+    public static final String FIXED_LOOT_CHEST_AT = "fixed-loot-chest-at";
+    public static final String CHECKED_CHUNK = "checked-chunk";
+    public static final String STARTING_FIX = "starting-fix";
 
 
     final Map<String, String> messageMap = new HashMap<>();
@@ -55,8 +63,42 @@ public class Messages {
         return string.replace("%lootchest%", id);
     }
 
+    private void addNewMessages() {
+        this.plugin.saveDefaultConfig();
+        final FileConfiguration config = this.plugin.getConfig();
+        final Map<String, String> addMessages = Map.of(
+                "command-fix", "%prefix% /lootchest fix <x> <y> <z> <x> <y> <z>",
+                "fix-task-complete", "%prefix% Loot chests have been fixed",
+                "fixed-loot-chest-at", "%prefix% Fixed loot chests at %x%, %y%, %z%",
+                "checked-chunk", "%prefix% Checked chunk %x%, %z% for loot chests",
+                "starting-fix", "%prefix% Starting fix");
+
+        final ConfigurationSection messagesSection = config.getConfigurationSection("messages");
+
+        if (messagesSection == null) {
+            this.plugin.getLogger().info("No messages section");
+            return;
+        }
+
+        final Set<String> keys = messagesSection.getKeys(false);
+
+        for (final var entry : addMessages.entrySet()) {
+            if (!keys.contains(entry.getKey())) {
+                config.set("messages." + entry.getKey(), entry.getValue());
+            }
+        }
+
+        try {
+            config.save(new File(this.plugin.getDataFolder(), "config.yml"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
     public void load() {
         this.messageMap.clear();
+        this.addNewMessages();
         this.plugin.saveDefaultConfig();
         this.plugin.reloadConfig();
         final FileConfiguration config = this.plugin.getConfig();

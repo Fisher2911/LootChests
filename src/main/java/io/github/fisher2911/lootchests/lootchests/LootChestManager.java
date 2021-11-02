@@ -258,7 +258,7 @@ public class LootChestManager {
 
             final Location location = locationOptional.get();
 
-            if (!(location instanceof final Container blockContainer)) {
+            if (!(location.getBlock().getState() instanceof final Container blockContainer)) {
                 return true;
             }
 
@@ -349,5 +349,22 @@ public class LootChestManager {
                 break;
             }
         }
+    }
+
+    public boolean fixLootChest(final Location location) {
+        final Optional<LootChest> optionalLootChest = this.getLootChestAtBlock(location.getBlock());
+
+        if (optionalLootChest.isEmpty()) {
+
+            return false;
+        }
+
+        final LootChest lootChest = optionalLootChest.get();
+
+        this.spawnHologram(lootChest,
+                location.clone().add(0.5, 1.5, 0.5));
+
+        this.saveLootChestLocation(location);
+        return true;
     }
 }

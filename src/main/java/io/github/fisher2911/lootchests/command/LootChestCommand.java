@@ -7,10 +7,13 @@ import io.github.fisher2911.lootchests.lootchests.LootChest;
 import io.github.fisher2911.lootchests.lootchests.LootChestManager;
 import io.github.fisher2911.lootchests.message.Messages;
 import io.github.fisher2911.lootchests.number.Range;
+import io.github.fisher2911.lootchests.world.LootChestFixer;
 import org.apache.commons.lang.math.NumberUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -20,7 +23,9 @@ import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -107,6 +112,11 @@ public class LootChestCommand implements CommandExecutor, TabExecutor {
 
             case "edititem" -> {
                 this.setItemChance(player, args);
+                return true;
+            }
+
+            case "fix" -> {
+                this.fixChests(player, args);
                 return true;
             }
         }
@@ -398,6 +408,52 @@ public class LootChestCommand implements CommandExecutor, TabExecutor {
         this.plugin.runAsync(() -> this.lootChestManager.saveLootChest(lootChest));
     }
 
+    public void fixChests(final Player player,
+                          final String[] args) {
+
+        try {
+            if (args.length != 7) {
+                player.sendMessage(
+                        this.messages.getMessage(
+                                Messages.COMMAND_FIX
+                        )
+                );
+                return;
+            }
+
+            final int startX = this.getNumber(player, args[1]);
+            final int startY = this.getNumber(player, args[2]);
+            final int startZ = this.getNumber(player, args[3]);
+            final int endX = this.getNumber(player, args[4]);
+            final int endY = this.getNumber(player, args[5]);
+            final int endZ = this.getNumber(player, args[6]);
+
+            final World world = player.getWorld();
+            final Location start = new Location(world, startX, startY, startZ);
+            final Location end = new Location(world, endX, endY, endZ);
+
+            player.sendMessage(
+                    this.messages.getMessage(Messages.STARTING_FIX)
+            );
+            LootChestFixer.startFix(this.plugin, player, start, end);
+        } catch (final NumberFormatException ignored) {}
+    }
+
+    private int getNumber(
+            final CommandSender sender,
+            final String number) throws NumberFormatException {
+
+        try {
+            return Integer.parseInt(number);
+        } catch (final NumberFormatException exception) {
+            sender.sendMessage(notNumberMessage.replace(
+                    "%number%", number
+            ));
+
+            throw new NumberFormatException();
+        }
+    }
+
     @Nullable
     @Override
     public List<String> onTabComplete(@NotNull final CommandSender sender,
@@ -407,6 +463,12 @@ public class LootChestCommand implements CommandExecutor, TabExecutor {
 
         if (!sender.hasPermission(permission)) {
             return null;
+        }
+
+        final List<String> fixTabs = this.fixTabs(sender, args);
+
+        if (!fixTabs.isEmpty()) {
+            return fixTabs;
         }
 
         final List<String> tabs = new ArrayList<>();
@@ -419,7 +481,7 @@ public class LootChestCommand implements CommandExecutor, TabExecutor {
                 return null;
             }
 
-            final List<String> possibleTabs = List.of("create", "delete", "get", "give", "edit", "list", "edititem", "reload");
+            final List<String> possibleTabs = List.of("create", "delete", "get", "give", "edit", "list", "edititem", "reload", "fix");
 
             for (final String possible : possibleTabs) {
                 if (possible.toLowerCase().startsWith(arg.toLowerCase())) {
@@ -477,5 +539,32 @@ public class LootChestCommand implements CommandExecutor, TabExecutor {
         }
 
         return null;
+    }
+
+    private List<String> fixTabs(final CommandSender sender, final String[] args) {
+        if (!(sender instanceof final Player player)) {
+            return Collections.emptyList();
+        }
+
+        if (args.length < 1) {
+            return Collections.emptyList();
+        }
+
+        if (!args[0].equals("fix")) {
+            return Collections.emptyList();
+        }
+
+        final Location location = player.getLocation();
+
+        final String x = String.valueOf(location.getBlockX());
+        final String y = String.valueOf(location.getBlockY());
+        final String z = String.valueOf(location.getBlockZ());
+
+        return switch (args.length) {
+            case 2, 5 -> List.of(x);
+            case 3, 6 -> List.of(y);
+            case 4, 7 -> List.of(z);
+            default -> Collections.emptyList();
+        };
     }
 }
