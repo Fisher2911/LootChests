@@ -18,6 +18,7 @@ public class LootChestsPlugin extends JavaPlugin {
 
     private LootChestManager lootChestManager;
     private Messages messages;
+    private boolean hologramsAlwaysVisible;
 
     @Override
     public void onEnable() {
@@ -43,6 +44,7 @@ public class LootChestsPlugin extends JavaPlugin {
     public void load() {
         this.lootChestManager.load();
         this.messages.load();
+        this.hologramsAlwaysVisible = this.getConfig().getBoolean("holograms-always-visible");
         Bukkit.getScheduler().runTaskLater(this,
                 () -> {
                     for (final World world : Bukkit.getWorlds()) {
@@ -73,5 +75,9 @@ public class LootChestsPlugin extends JavaPlugin {
     
     public void runAsync(final Runnable runnable) {
         Bukkit.getScheduler().runTaskAsynchronously(this, runnable);
+    }
+
+    public boolean isHologramsAlwaysVisible() {
+        return hologramsAlwaysVisible;
     }
 }

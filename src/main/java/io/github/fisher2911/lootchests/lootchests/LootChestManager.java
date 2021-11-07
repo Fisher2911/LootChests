@@ -314,6 +314,7 @@ public class LootChestManager {
         hologram.appendTextLine(this.plugin.getMessages().
                 getMessage(
                         Messages.HOLOGRAM_DISPLAY_NOT_LOOTED, lootChest.getDisplayName()));
+        hologram.getVisibilityManager().setVisibleByDefault(this.plugin.isHologramsAlwaysVisible());
     }
 
     public Optional<LootChest> getLootChestAtBlock(final Block block) {
