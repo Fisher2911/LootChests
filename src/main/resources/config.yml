@@ -1,4 +1,4 @@
-holograms-always-visible: false
+holograms-visible: true
 messages:
   prefix: "&aServer >>"
   reloaded: "%prefix% Reloaded successfully"
